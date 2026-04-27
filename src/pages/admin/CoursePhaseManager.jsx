@@ -36,7 +36,11 @@ export default function CoursePhaseManager() {
     if (!newPhaseName) return;
     
     const { data, error } = await supabase.from('phases').insert([{ name: newPhaseName }]).select();
-    if (!error && data) {
+    if (error) {
+      alert("Database error: " + error.message);
+      return;
+    }
+    if (data) {
       setPhases([...phases, data[0]]);
       setNewPhaseName('');
     }
@@ -52,7 +56,11 @@ export default function CoursePhaseManager() {
       phase_id: selectedPhaseId
     }]).select('*, phases(name)');
     
-    if (!error && data) {
+    if (error) {
+      alert("Database error: " + error.message);
+      return;
+    }
+    if (data) {
       setCourses([...courses, data[0]]);
       setNewCourseName('');
       setNewCourseDesc('');

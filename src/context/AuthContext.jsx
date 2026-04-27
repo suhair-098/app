@@ -29,9 +29,11 @@ export function AuthProvider({ children }) {
   // Removing Supabase onAuthStateChange since we are mocking auth
 
   const login = async (username, password) => {
-    if (username === 'admin' && password === '1234') {
+    const userLower = username.trim().toLowerCase();
+    
+    if (userLower === 'admin' && password === '1234') {
       setUser({ id: 'admin-1', username: 'admin', role: 'admin', email: 'Admin' });
-    } else if (username === 'student' && password === '1234') {
+    } else if (userLower === 'student' && password === '1234') {
       setUser({ id: 'student-1', username: 'student', role: 'student', email: 'Student' });
     } else {
       throw new Error('Invalid credentials. Use student/1234 or admin/1234');
