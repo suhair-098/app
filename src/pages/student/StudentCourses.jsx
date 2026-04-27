@@ -49,12 +49,12 @@ export default function StudentCourses() {
                <h4 style={{marginTop: '1rem', color: 'var(--color-text-secondary)'}}>Syllabus Description:</h4>
                <p>{course.description || "No description provided."}</p>
                
-               <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--color-surface-dark-light)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-around'}}>
-                 <div>
+               <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--color-surface-dark-light)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                 <div style={{flex: 1}}>
                    <h4>Attendance for {course.name}</h4>
                    {totalClasses > 0 && <small style={{display: 'block', marginTop: '0.5rem', color: 'var(--color-text-muted)'}}>{attendedClasses} / {totalClasses} classes</small>}
                  </div>
-                 <div style={{ opacity: totalClasses === 0 ? 0.3 : 1 }}>
+                 <div style={{ minWidth: '80px', minHeight: '80px', opacity: totalClasses === 0 ? 0.3 : 1 }}>
                    <CircularProgress percentage={pct} size={80} strokeWidth={8} color="var(--color-accent)" />
                  </div>
                </div>
