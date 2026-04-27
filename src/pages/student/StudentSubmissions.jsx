@@ -13,9 +13,18 @@ export default function StudentSubmissions() {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    supabase.from('courses').select('id, name').then(({data}) => {
-      if (data) setCourses(data);
-    });
+    supabase.from('courses').select('id, name')
+      .then(({data, error}) => {
+         if (error) {
+           console.error("Error loading courses:", error);
+           alert("DB Error: " + error.message);
+         }
+         if (data) setCourses(data);
+      })
+      .catch(err => {
+         console.error("Crash loading courses:", err);
+         alert("Crash: " + err.message);
+      });
   }, []);
 
   const handleSubmit = async (e) => {

@@ -10,10 +10,12 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const { count: cCount } = await supabase.from('courses').select('*', { count: 'exact', head: true });
+        const { count: cCount, error: cErr } = await supabase.from('courses').select('*', { count: 'exact', head: true });
+        if (cErr) console.error("Error fetching courses stats:", cErr);
         if (cCount !== null) setCoursesCount(cCount);
         
-        const { count: sCount } = await supabase.from('submissions').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+        const { count: sCount, error: sErr } = await supabase.from('submissions').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+        if (sErr) console.error("Error fetching sub stats:", sErr);
         if (sCount !== null) setSubmissionsCount(sCount);
       } catch (err) {
         console.error("Error fetching stats:", err);

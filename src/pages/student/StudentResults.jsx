@@ -15,21 +15,32 @@ export default function StudentResults() {
   }, []);
 
   const fetchData = async () => {
-    setLoading(true);
-    // Fetch results
-    const { data: resData } = await supabase
-      .from('results')
-      .select('*, courses(name, phases(name))');
+    try {
+      setLoading(true);
+      // Fetch results
+      const { data: resData, error: resError } = await supabase
+        .from('results')
+        .select('*, courses(name, phases(name))');
+        
+      if (resError) {
+        console.error("Error fetching results:", resError);
+        alert("DB Error in results: " + resError.message);
+      } else if (resData) {
+        setResults(resData);
+      }
       
-    if (resData) setResults(resData);
-    
-    // Fetch attendance
-    const { data: attData } = await supabase
-      .from('attendance')
-      .select('*').catch(()=> ({ data: [] }));
-    if (attData) setAttendance(attData);
-
-    setLoading(false);
+      // Fetch attendance
+      const { data: attData, error: attError } = await supabase
+        .from('attendance')
+        .select('*');
+      if (attError) console.error("Error fetching attendance:", attError);
+      if (attData) setAttendance(attData);
+    } catch (err) {
+      console.error("Exception in fetchResults:", err);
+      alert("App crashed while loading results: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
   
   const handleNoteChange = (phaseName, val) => {

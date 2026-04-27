@@ -13,20 +13,32 @@ export default function StudentCourses() {
   }, []);
 
   const fetchCourses = async () => {
-    setLoading(true);
-    // Fetch courses with phase info attached
-    const { data } = await supabase
-      .from('courses')
-      .select('*, phases(name)')
-      .order('phase_id');
-      
-    if (data) setCourses(data);
+    try {
+      setLoading(true);
+      // Fetch courses with phase info attached
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*, phases(name)')
+        .order('phase_id');
+        
+      if (error) {
+        console.error("Supabase Error fetchCourses:", error);
+        alert("Database error loading courses: " + error.message);
+      } else if (data) {
+        setCourses(data);
+      }
 
-    // Fetch attendance blocks
-    const { data: attData } = await supabase.from('attendance').select('*').catch(()=> ({ data: [] }));
-    if (attData) setAttendanceData(attData);
+      // Fetch attendance blocks
+      const { data: attData, error: attError } = await supabase.from('attendance').select('*');
+      if (attError) console.error("Attendance Error:", attError);
+      if (attData) setAttendanceData(attData);
 
-    setLoading(false);
+    } catch (err) {
+      console.error("Exception in fetchCourses:", err);
+      alert("App crashed while loading: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) return <div>Loading your syllabus...</div>;
