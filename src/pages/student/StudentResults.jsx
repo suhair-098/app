@@ -16,65 +16,84 @@ export default function StudentResults() {
     setLoading(true);
     const { data } = await supabase
       .from('results')
-      .select('*, courses(name)');
+      .select('*, courses(name, phases(name))');
       
     if (data) setResults(data);
     setLoading(false);
   };
 
-  const exportToPDF = (result) => {
+  const exportPhasePDF = (phaseName, phaseResults) => {
     const doc = new jsPDF();
     
     // Watermark
     doc.setTextColor(200, 200, 200);
-    doc.setFontSize(80);
-    doc.text("ASAP", 40, 150, { angle: 45, opacity: 0.1 });
+    doc.setFontSize(100);
+    doc.text("ASAP", 105, 160, { angle: 45, align: "center", opacity: 0.1 });
     
-    // Details
+    // Headings
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(22);
-    doc.text("ASAP Result Certificate", 20, 30);
+    doc.setFontSize(28);
+    doc.text("ASAP", 105, 30, { align: "center" });
+    
+    doc.setFontSize(16);
+    doc.text("Additional Skill Acquisition Programme", 105, 45, { align: "center" });
     
     doc.setFontSize(14);
-    doc.text(`Student: Student Name (Mock)`, 20, 50);
-    doc.text(`Course: ${result.courses?.name || 'Unknown Course'}`, 20, 60);
-    doc.text(`Marks Obtained: ${result.marks}`, 20, 70);
-    doc.text(`Final Grade: ${result.grade}`, 20, 80);
+    doc.text(`Phase: ${phaseName}`, 105, 60, { align: "center" });
+    doc.text("Results Certificate", 105, 70, { align: "center" });
+    
+    // Table Header
+    doc.setFontSize(12);
+    doc.text("Course Name", 20, 100);
+    doc.text("Marks Obtained", 130, 100);
+    doc.text("Grade", 170, 100);
+    doc.line(20, 104, 190, 104);
+    
+    let y = 115;
+    phaseResults.forEach((res) => {
+      doc.text(res.courses?.name || 'Unknown Course', 20, y);
+      doc.text(String(res.marks || 0), 130, y);
+      doc.text(res.grade || 'N/A', 170, y);
+      y += 12;
+    });
     
     doc.setFontSize(10);
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 270);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 280);
     
-    doc.save(`ASAP_Result_${result.courses?.name || 'course'}.pdf`);
+    doc.save(`ASAP_Results_${phaseName.replace(/\s+/g, '_')}.pdf`);
   };
 
   if (loading) return <div>Loading results...</div>;
+
+  const groupedByPhase = results.reduce((acc, result) => {
+    const pName = result.courses?.phases?.name || 'Unknown Phase';
+    if (!acc[pName]) acc[pName] = [];
+    acc[pName].push(result);
+    return acc;
+  }, {});
 
   return (
     <div className="animate-fade-in">
       <h1 className="page-title">My Results</h1>
       
       <div className="admin-grid">
-        {results.map(res => (
-           <Card key={res.id}>
-             <h3 style={{marginTop: 0, color: 'var(--color-primary-light)'}}>{res.courses?.name}</h3>
+        {Object.entries(groupedByPhase).map(([phaseName, phaseResults]) => (
+           <Card key={phaseName} title={phaseName}>
+             <ul className="item-list">
+               {phaseResults.map(res => (
+                 <li key={res.id} className="list-item" style={{display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--color-surface-dark-light)', borderRadius: '8px', marginBottom: '0.5rem', border: 'none'}}>
+                   <span>{res.courses?.name}</span>
+                   <span><strong>{res.grade}</strong> ({res.marks})</span>
+                 </li>
+               ))}
+             </ul>
              
-             <div style={{display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'var(--color-surface-dark-light)', borderRadius: '8px', margin: '1rem 0'}}>
-               <div>
-                 <span style={{color: 'var(--color-text-secondary)', fontSize: '0.8rem', display: 'block'}}>Marks</span>
-                 <strong>{res.marks}</strong>
-               </div>
-               <div style={{textAlign: 'right'}}>
-                 <span style={{color: 'var(--color-text-secondary)', fontSize: '0.8rem', display: 'block'}}>Grade</span>
-                 <strong style={{color: 'var(--color-accent)'}}>{res.grade}</strong>
-               </div>
-             </div>
-             
-             <button onClick={() => exportToPDF(res)} className="btn-small" style={{width: 'auto'}}>
-               <Download size={16}/> Export PDF
+             <button onClick={() => exportPhasePDF(phaseName, phaseResults)} className="btn-small" style={{marginTop: '1.5rem'}}>
+               <Download size={16}/> Export Phase PDF
              </button>
            </Card>
         ))}
-        {results.length === 0 && <p className="empty-text">No results published yet.</p>}
+        {Object.keys(groupedByPhase).length === 0 && <p className="empty-text">No results published yet.</p>}
       </div>
     </div>
   );

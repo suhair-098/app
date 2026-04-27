@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../components/Card';
+import CircularProgress from '../../components/CircularProgress';
 import { supabase } from '../../supabaseClient';
 
 export default function StudentCourses() {
@@ -48,15 +49,14 @@ export default function StudentCourses() {
                <h4 style={{marginTop: '1rem', color: 'var(--color-text-secondary)'}}>Syllabus Description:</h4>
                <p>{course.description || "No description provided."}</p>
                
-               <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px'}}>
-                 <h4>Attendance for {course.name}</h4>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', opacity: totalClasses === 0 ? 0.5 : 1 }}>
-                    <div style={{ flex: 1, height: '8px', background: 'var(--color-surface-dark-light)', borderRadius: '4px' }}>
-                      <div style={{ width: `${pct}%`, height: '100%', background: 'var(--color-accent)', borderRadius: '4px' }}></div>
-                    </div>
-                    <span style={{fontWeight: 'bold'}}>{totalClasses > 0 ? `${pct}%` : 'N/A'}</span>
+               <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--color-surface-dark-light)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-around'}}>
+                 <div>
+                   <h4>Attendance for {course.name}</h4>
+                   {totalClasses > 0 && <small style={{display: 'block', marginTop: '0.5rem', color: 'var(--color-text-muted)'}}>{attendedClasses} / {totalClasses} classes</small>}
                  </div>
-                 {totalClasses > 0 && <small style={{display: 'block', marginTop: '0.5rem', color: 'var(--color-text-muted)'}}>{attendedClasses} / {totalClasses} classes</small>}
+                 <div style={{ opacity: totalClasses === 0 ? 0.3 : 1 }}>
+                   <CircularProgress percentage={pct} size={80} strokeWidth={8} color="var(--color-accent)" />
+                 </div>
                </div>
              </Card>
            );
