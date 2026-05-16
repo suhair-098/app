@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../../components/Card';
 import CircularProgress from '../../components/CircularProgress';
-import { Layers } from 'lucide-react';
+import { Layers, BookOpen, UploadCloud, FileText } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 
 export default function StudentDashboard() {
@@ -10,6 +11,7 @@ export default function StudentDashboard() {
   const [attendedClasses, setAttendedClasses] = useState(0);
   const [phases, setPhases] = useState([]);
   const [selectedPhase, setSelectedPhase] = useState(localStorage.getItem('selectedPhaseId') || '');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
@@ -56,6 +58,13 @@ export default function StudentDashboard() {
     window.dispatchEvent(new Event('phaseChanged'));
   };
 
+  const menuItems = [
+    { title: "My Courses", icon: <BookOpen size={32} />, path: "/student/courses", color: "var(--color-primary)" },
+    { title: "Submissions", icon: <UploadCloud size={32} />, path: "/student/submissions", color: "var(--color-secondary)" },
+    { title: "Results", icon: <FileText size={32} />, path: "/student/results", color: "var(--color-success)" },
+    { title: "Notice Board", icon: <BookOpen size={32} />, path: "/student/notices", color: "var(--color-accent)" },
+  ];
+
   return (
     <div className="animate-fade-in">
       <h1 style={{ marginBottom: '2rem', fontSize: '2.5rem', fontWeight: 'bold' }}>Student Dashboard</h1>
@@ -79,7 +88,7 @@ export default function StudentDashboard() {
         </Card>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
         <Card title="Attendance" className="attendance-card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', padding: '1rem 0' }}>
             <CircularProgress percentage={attendancePercentage} color="var(--color-accent)" />
@@ -90,6 +99,45 @@ export default function StudentDashboard() {
             </div>
           </div>
         </Card>
+      </div>
+
+      <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', color: 'var(--color-text-secondary)' }}>Navigation Menu</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+        {menuItems.map((item, idx) => (
+          <div 
+            key={idx} 
+            onClick={() => navigate(item.path)}
+            style={{
+              background: 'var(--color-surface-dark)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--border-radius-lg)',
+              padding: '2rem 1.5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '1rem',
+              cursor: 'pointer',
+              boxShadow: 'var(--shadow-sm)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-4px)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+              e.currentTarget.style.borderColor = item.color;
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+              e.currentTarget.style.borderColor = 'var(--color-border)';
+            }}
+          >
+            <div style={{ color: item.color, background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '50%' }}>
+              {item.icon}
+            </div>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-text-primary)' }}>{item.title}</h3>
+          </div>
+        ))}
       </div>
     </div>
   );

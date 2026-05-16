@@ -4,22 +4,19 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 
 import { Home, BookOpen, FileText, UploadCloud, Users, Layers, LayoutDashboard } from 'lucide-react';
-import Navbar from './components/Navbar';
+import Header from './components/Header';
+import { supabase } from './supabaseClient';
 
-// Layouts with Navbar
+// Layouts with Header
 const AdminLayout = ({ children }) => {
-  const links = [
-    { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
-    { to: "/admin/courses", label: "Courses & Phases", icon: Layers },
-    { to: "/admin/submissions", label: "Submissions", icon: FileText },
-    { to: "/admin/results", label: "Results Upload", icon: UploadCloud },
-    { to: "/admin/attendance", label: "Attendance", icon: Users },
-    { to: "/admin/notices", label: "Notices", icon: FileText },
-  ];
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.reload();
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw' }}>
-      <Navbar links={links} title="ASAP Admin" />
+      <Header role="admin" onLogout={handleLogout} />
       <main style={{ flex: 1, padding: '2rem', overflowY: 'auto', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
         {children}
       </main>
@@ -28,17 +25,14 @@ const AdminLayout = ({ children }) => {
 };
 
 const StudentLayout = ({ children }) => {
-  const links = [
-    { to: "/student/dashboard", label: "Dashboard", icon: Home, end: true },
-    { to: "/student/courses", label: "My Courses", icon: BookOpen },
-    { to: "/student/submissions", label: "Submissions", icon: UploadCloud },
-    { to: "/student/results", label: "Results", icon: FileText },
-    { to: "/student/notices", label: "Notices", icon: BookOpen },
-  ];
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.reload();
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw' }}>
-      <Navbar links={links} title="ASAP Student" />
+      <Header role="student" onLogout={handleLogout} />
       <main style={{ flex: 1, padding: '2rem', overflowY: 'auto', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
         {children}
       </main>

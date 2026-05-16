@@ -15,21 +15,29 @@ export default function AdminNotices() {
 
   const fetchNotices = async () => {
     const { data } = await supabase.from('notices').select('*').order('created_at', { ascending: false });
-    if (data) setNotices(data);
+    // Filter out Phase Notes which start with PHASE_NOTE|
+    if (data) {
+       setNotices(data.filter(n => !n.title.startsWith('PHASE_NOTE|')));
+    }
   };
 
   const handlePostNotice = async (e) => {
     e.preventDefault();
     if (!title || !content) return;
 
-    const { error } = await supabase.from('notices').insert([{ title, content, image_url: imageUrl }]);
+    let finalContent = content;
+    if (imageUrl) {
+       finalContent = `${content}\n\n[IMG:${imageUrl}]`;
+    }
+
+    const { error } = await supabase.from('notices').insert([{ title, content: finalContent }]);
     if (!error) {
       setTitle('');
       setContent('');
       setImageUrl('');
       fetchNotices();
     } else {
-      alert("Error posting notice: Ensure 'image_url' column exists in 'notices' table. " + error.message);
+      alert("Error posting notice: " + error.message);
     }
   };
 
@@ -38,8 +46,20 @@ export default function AdminNotices() {
     fetchNotices();
   };
 
+  const parseContent = (rawContent) => {
+    const match = rawContent.match(/\[IMG:(.*?)\]/);
+    if (match) {
+      return {
+        text: rawContent.replace(match[0], '').trim(),
+        img: match[1]
+      };
+    }
+    return { text: rawContent, img: null };
+  };
+
   return (
     <div className="animate-fade-in">
+      <BackButton />
       <h1 className="page-title">Notice Board Management</h1>
       
       <div className="admin-grid">
@@ -63,23 +83,26 @@ export default function AdminNotices() {
         <section>
           <Card title="Recent Notices">
             <ul className="item-list">
-              {notices.map(notice => (
-                <li key={notice.id} className="list-item complex" style={{alignItems: 'flex-start'}}>
-                  <div style={{flex: 1}}>
-                    <strong>{notice.title}</strong>
-                    <p className="desc">{notice.content}</p>
-                    {notice.image_url && (
-                      <div style={{marginTop: '0.5rem'}}>
-                        <img src={notice.image_url} alt="Notice attachment" style={{maxWidth: '100%', borderRadius: '8px', maxHeight: '150px', objectFit: 'cover'}} />
-                      </div>
-                    )}
-                    <small style={{color: 'var(--color-primary-light)', fontSize: '0.75rem', marginTop: '0.5rem', display: 'block'}}>
-                       {new Date(notice.created_at).toLocaleString()}
-                    </small>
-                  </div>
-                  <button onClick={() => handleDelete(notice.id)} className="btn-icon danger"><Trash2 size={16}/></button>
-                </li>
-              ))}
+              {notices.map(notice => {
+                const { text, img } = parseContent(notice.content);
+                return (
+                  <li key={notice.id} className="list-item complex" style={{alignItems: 'flex-start'}}>
+                    <div style={{flex: 1}}>
+                      <strong>{notice.title}</strong>
+                      <p className="desc">{text}</p>
+                      {img && (
+                        <div style={{marginTop: '0.5rem'}}>
+                          <img src={img} alt="Notice attachment" style={{maxWidth: '100%', borderRadius: '8px', maxHeight: '150px', objectFit: 'cover'}} />
+                        </div>
+                      )}
+                      <small style={{color: 'var(--color-primary-light)', fontSize: '0.75rem', marginTop: '0.5rem', display: 'block'}}>
+                         {new Date(notice.created_at).toLocaleString()}
+                      </small>
+                    </div>
+                    <button onClick={() => handleDelete(notice.id)} className="btn-icon danger"><Trash2 size={16}/></button>
+                  </li>
+                );
+              })}
               {notices.length === 0 && <p className="empty-text">No notices posted.</p>}
             </ul>
           </Card>

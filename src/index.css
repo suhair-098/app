@@ -24,6 +24,7 @@
   --color-border: rgba(255, 255, 255, 0.1);
   --color-error: #ef4444;
   --color-success: #10b981;
+  --color-warning: #f59e0b;
   
   --border-radius-sm: 0.5rem;
   --border-radius-md: 1rem;
@@ -37,6 +38,34 @@
   
   --font-heading: 'Outfit', sans-serif;
   --font-body: 'Inter', sans-serif;
+}
+
+[data-theme="light"] {
+  --color-primary: #6d28d9;
+  --color-primary-light: #8b5cf6;
+  --color-primary-dark: #4c1d95;
+  --color-primary-transparent: rgba(109, 40, 217, 0.1);
+  
+  --color-secondary: #db2777;
+  --color-secondary-light: #ec4899;
+  
+  --color-accent: #0891b2;
+  --color-accent-light: #06b6d4;
+  
+  --color-background-dark: #f8fafc; /* Light slate */
+  --color-surface-dark: #ffffff;    /* White */
+  --color-surface-dark-light: #f1f5f9;
+  
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  
+  --color-border: rgba(0, 0, 0, 0.1);
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(109, 40, 217, 0.15);
 }
 
 body {

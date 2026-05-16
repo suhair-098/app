@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../components/Card';
 import { supabase } from '../../supabaseClient';
-import { Plus, Edit2, Trash2, Check, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Check, X, FileText } from 'lucide-react';
+import BackButton from '../../components/BackButton';
 
 export default function AdminResults() {
   const [results, setResults] = useState([]);
@@ -15,7 +16,10 @@ export default function AdminResults() {
   const [editingId, setEditingId] = useState(null);
   const [editMarks, setEditMarks] = useState('');
   const [editGrade, setEditGrade] = useState('');
-  const [editNote, setEditNote] = useState('');
+
+  // Phase Note state
+  const [phaseNote, setPhaseNote] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
 
   useEffect(() => {
     supabase.from('courses').select('*').then(({data}) => { if(data) setCourses(data); });
@@ -39,6 +43,37 @@ export default function AdminResults() {
       }
       setResults(finalData);
     }
+
+    if (selectedPhase) {
+       const noteKey = `PHASE_NOTE|${selectedPhase}`;
+       const { data: noteData } = await supabase.from('notices').select('content').eq('title', noteKey).limit(1);
+       if (noteData && noteData.length > 0) {
+         setPhaseNote(noteData[0].content);
+       } else {
+         setPhaseNote('');
+       }
+    } else {
+       setPhaseNote('');
+    }
+  };
+
+  const handleSavePhaseNote = async (e) => {
+    e.preventDefault();
+    const selectedPhase = localStorage.getItem('selectedPhaseId');
+    if (!selectedPhase) {
+      alert("Please select a Phase globally from the Dashboard first.");
+      return;
+    }
+    setSavingNote(true);
+    const noteKey = `PHASE_NOTE|${selectedPhase}`;
+    // Delete existing note for this phase
+    await supabase.from('notices').delete().eq('title', noteKey);
+    // Insert new
+    if (phaseNote.trim() !== '') {
+      await supabase.from('notices').insert([{ title: noteKey, content: phaseNote }]);
+    }
+    setSavingNote(false);
+    alert("Phase note saved! This will appear on the Student's PDF.");
   };
 
   const handleAddResult = async (e) => {
@@ -73,52 +108,76 @@ export default function AdminResults() {
     setEditingId(res.id);
     setEditMarks(res.marks);
     setEditGrade(res.grade);
-    setEditNote(res.admin_note || '');
   };
 
   const handleSaveEdit = async (id) => {
     const { error } = await supabase.from('results').update({
       marks: parseInt(editMarks),
-      grade: editGrade,
-      admin_note: editNote
+      grade: editGrade
     }).eq('id', id);
 
     if (!error) {
       setEditingId(null);
       fetchResults();
     } else {
-      alert("Error updating result. Make sure 'admin_note' column exists in 'results' table.");
+      alert("Error updating result.");
     }
   };
 
   return (
     <div className="animate-fade-in">
+      <BackButton />
       <h1 className="page-title">Results Management</h1>
       
+      {!localStorage.getItem('selectedPhaseId') && (
+        <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(234, 179, 8, 0.1)', color: 'var(--color-warning)', border: '1px solid rgba(234, 179, 8, 0.2)', borderRadius: '8px' }}>
+          Select a Phase in the Dashboard to filter the courses list and manage Phase Notes.
+        </div>
+      )}
+
       <div className="admin-grid">
-        <Card title="Publish Result">
-          <form onSubmit={handleAddResult} className="stacked-form">
-            <label>Course</label>
-            <select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)} required>
-               <option value="">-- Select Course --</option>
-               {courses
-                 .filter(c => {
-                   const sp = localStorage.getItem('selectedPhaseId');
-                   return sp ? c.phase_id == sp : true;
-                 })
-                 .map(c => <option key={c.id} value={c.id}>{c.name}</option>)
-               }
-            </select>
-            
-            <label>Marks</label>
-            <input type="number" value={marks} onChange={e => setMarks(e.target.value)} required />
-            
-            <label>Grade (A, B, C, F)</label>
-            <input type="text" value={grade} onChange={e => setGrade(e.target.value)} required />
-            
-            <button type="submit" className="btn-small"><Plus size={16}/> Upload Result</button>
-          </form>
-        </Card>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <Card title="Publish Result">
+            <form onSubmit={handleAddResult} className="stacked-form">
+              <label>Course</label>
+              <select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)} required>
+                 <option value="">-- Select Course --</option>
+                 {courses
+                   .filter(c => {
+                     const sp = localStorage.getItem('selectedPhaseId');
+                     return sp ? c.phase_id == sp : true;
+                   })
+                   .map(c => <option key={c.id} value={c.id}>{c.name}</option>)
+                 }
+              </select>
+              
+              <label>Marks</label>
+              <input type="number" value={marks} onChange={e => setMarks(e.target.value)} required />
+              
+              <label>Grade (A, B, C, F)</label>
+              <input type="text" value={grade} onChange={e => setGrade(e.target.value)} required />
+              
+              <button type="submit" className="btn-small"><Plus size={16}/> Upload Result</button>
+            </form>
+          </Card>
+
+          <Card title="Phase Note (For PDF Export)">
+            <form onSubmit={handleSavePhaseNote} className="stacked-form">
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>
+                Add a general note or remark for the currently selected phase. This note will be printed at the bottom of the student's result PDF.
+              </p>
+              <textarea 
+                value={phaseNote} 
+                onChange={e => setPhaseNote(e.target.value)} 
+                rows="4" 
+                placeholder="E.g., Promoted to next phase. Congratulations!" 
+              />
+              <button type="submit" className="btn-small" disabled={!localStorage.getItem('selectedPhaseId')}>
+                <FileText size={16}/> {savingNote ? 'Saving...' : 'Save Phase Note'}
+              </button>
+            </form>
+          </Card>
+        </div>
         
         <Card title="Published Results">
           <ul className="item-list">
@@ -173,23 +232,6 @@ export default function AdminResults() {
                      )}
                    </div>
                  </div>
-                 
-                 {/* Admin Notes Section */}
-                 {editingId === res.id ? (
-                    <textarea 
-                      value={editNote} 
-                      onChange={e => setEditNote(e.target.value)} 
-                      placeholder="Add a note to be appended to the student's Phase PDF..."
-                      style={{ marginTop: '0.5rem', width: '100%', padding: '0.5rem', borderRadius: '4px' }}
-                      rows={2}
-                    />
-                 ) : (
-                    res.admin_note && (
-                      <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                        <strong>Note:</strong> {res.admin_note}
-                      </div>
-                    )
-                 )}
                </li>
              ))}
              {results.length === 0 && <p className="empty-text">No results found for this phase.</p>}

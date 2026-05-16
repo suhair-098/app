@@ -4,10 +4,12 @@ import { supabase } from '../../supabaseClient';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Download } from 'lucide-react';
+import BackButton from '../../components/BackButton';
 
 export default function StudentResults() {
   const [results, setResults] = useState([]);
   const [attendance, setAttendance] = useState([]);
+  const [phaseNotes, setPhaseNotes] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,6 +47,18 @@ export default function StudentResults() {
         .select('*');
       if (attError) console.error("Error fetching attendance:", attError);
       if (attData) setAttendance(attData);
+
+      // Fetch phase notes
+      const { data: notesData } = await supabase.from('notices').select('title, content').like('title', 'PHASE_NOTE|%');
+      if (notesData) {
+        const notesMap = {};
+        notesData.forEach(n => {
+           const phaseId = n.title.split('|')[1];
+           notesMap[phaseId] = n.content;
+        });
+        setPhaseNotes(notesMap);
+      }
+      
     } catch (err) {
       console.error("Exception in fetchResults:", err);
       alert("App crashed while loading results: " + err.message);
@@ -53,20 +67,27 @@ export default function StudentResults() {
     }
   };
 
-  const exportPhasePDF = (phaseName, phaseResults) => {
+  const exportPhasePDF = (phaseName, phaseResults, phaseId) => {
     const doc = new jsPDF();
     
-    // Headings
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(28);
-    doc.text("ASAP", 105, 30, { align: "center" });
+    // Header Background
+    doc.setFillColor(139, 92, 246); // Primary Purple
+    doc.rect(0, 0, 210, 50, 'F');
     
-    doc.setFontSize(16);
-    doc.text("Additional Skill Acquisition Programme", 105, 45, { align: "center" });
+    // Headings
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
+    doc.setFont("helvetica", "bold");
+    doc.text("ASAP", 105, 22, { align: "center" });
     
     doc.setFontSize(14);
-    doc.text(`Phase: ${phaseName}`, 105, 60, { align: "center" });
-    doc.text("Results Certificate", 105, 70, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.text("Additional Skill Acquisition Programme", 105, 32, { align: "center" });
+    
+    doc.setFontSize(12);
+    doc.text(`Results Certificate: ${phaseName}`, 105, 42, { align: "center" });
+    
+    doc.setTextColor(0, 0, 0); // Reset text color to black for body
     
     const tableData = phaseResults.map(res => {
       const courseAtts = attendance.filter(a => a.course_id === res.course_id);
@@ -76,76 +97,102 @@ export default function StudentResults() {
       
       return [
         res.courses?.name || 'Unknown Course',
-        String(res.marks || 0),
         res.grade || 'N/A',
-        attPct
+        attPct,
+        String(res.marks || 0)
       ];
     });
 
     autoTable(doc, {
-      startY: 90,
-      head: [['Course Name', 'Marks', 'Grade', 'Attendance']],
+      startY: 60,
+      head: [['Course Name', 'Grade', 'Attendance', 'Marks']],
       body: tableData,
       theme: 'grid',
       headStyles: { fillColor: [139, 92, 246] }, // Primary color
-      styles: { fontSize: 11, cellPadding: 4 },
-      margin: { top: 90 }
+      styles: { fontSize: 11, cellPadding: 6 },
+      margin: { top: 60 }
     });
 
     let finalY = doc.lastAutoTable.finalY + 15;
 
-    // Notes block (check if admin added note to any result in this phase)
-    const adminNotes = phaseResults.map(r => r.admin_note).filter(Boolean);
-    if (adminNotes.length > 0) {
+    // Phase Note block
+    const note = phaseNotes[phaseId];
+    if (note) {
       doc.setFontSize(12);
-      doc.text("Notes:", 20, finalY);
+      doc.setFont("helvetica", "bold");
+      doc.text("Admin Remarks:", 20, finalY);
       finalY += 7;
-      doc.setFontSize(10);
       
-      const combinedNotes = adminNotes.join('\n');
-      const splitNotes = doc.splitTextToSize(combinedNotes, 170);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "italic");
+      const splitNotes = doc.splitTextToSize(note, 170);
       doc.text(splitNotes, 20, finalY);
     }
     
     doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
     doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 280);
     
     doc.save(`ASAP_Results_${phaseName.replace(/\s+/g, '_')}.pdf`);
   };
 
-  if (loading) return <div>Loading results...</div>;
+  if (loading) return <div style={{padding: '2rem'}}>Loading results...</div>;
 
   const groupedByPhase = results.reduce((acc, result) => {
     const pName = result.courses?.phases?.name || 'Unknown Phase';
-    if (!acc[pName]) acc[pName] = [];
-    acc[pName].push(result);
+    const pId = result.courses?.phase_id;
+    if (!acc[pName]) acc[pName] = { id: pId, results: [] };
+    acc[pName].results.push(result);
     return acc;
   }, {});
 
   return (
     <div className="animate-fade-in">
+      <BackButton />
       <h1 className="page-title">My Results</h1>
       
-      <div className="admin-grid">
-        {Object.entries(groupedByPhase).map(([phaseName, phaseResults]) => (
+      <div className="admin-grid" style={{ gridTemplateColumns: '1fr' }}>
+        {Object.entries(groupedByPhase).map(([phaseName, phaseData]) => (
            <Card key={phaseName} title={phaseName}>
-             <ul className="item-list">
-               {phaseResults.map(res => {
-                 const courseAtts = attendance.filter(a => a.course_id === res.course_id);
-                 const ttClasses = courseAtts.reduce((acc, curr) => acc + curr.total_classes, 0);
-                 const atClasses = courseAtts.reduce((acc, curr) => acc + curr.attended_classes, 0);
-                 const attPct = ttClasses > 0 ? Math.round((atClasses / ttClasses) * 100) + '%' : 'N/A';
-                 return (
-                   <li key={res.id} className="list-item" style={{display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--color-surface-dark-light)', borderRadius: '8px', marginBottom: '0.5rem', border: 'none'}}>
-                     <span>{res.courses?.name}</span>
-                     <span><strong>{res.grade}</strong> ({res.marks}) | Att: {attPct}</span>
-                   </li>
-                 )
-               })}
-             </ul>
              
-             <button onClick={() => exportPhasePDF(phaseName, phaseResults)} className="btn-small" style={{marginTop: '1.5rem'}}>
-               <Download size={16}/> Export Phase PDF
+             <div style={{ overflowX: 'auto', marginBottom: '1.5rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                 <thead>
+                   <tr style={{ background: 'var(--color-primary-transparent)', borderBottom: '1px solid var(--color-border)' }}>
+                     <th style={{ padding: '1rem' }}>Course Name</th>
+                     <th style={{ padding: '1rem' }}>Grade</th>
+                     <th style={{ padding: '1rem' }}>Attendance</th>
+                     <th style={{ padding: '1rem' }}>Marks</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   {phaseData.results.map((res, index) => {
+                     const courseAtts = attendance.filter(a => a.course_id === res.course_id);
+                     const ttClasses = courseAtts.reduce((acc, curr) => acc + curr.total_classes, 0);
+                     const atClasses = courseAtts.reduce((acc, curr) => acc + curr.attended_classes, 0);
+                     const attPct = ttClasses > 0 ? Math.round((atClasses / ttClasses) * 100) + '%' : 'N/A';
+                     return (
+                       <tr key={res.id} style={{ borderBottom: index === phaseData.results.length - 1 ? 'none' : '1px solid var(--color-border)' }}>
+                         <td style={{ padding: '1rem' }}>{res.courses?.name}</td>
+                         <td style={{ padding: '1rem', fontWeight: 'bold', color: 'var(--color-primary-light)' }}>{res.grade}</td>
+                         <td style={{ padding: '1rem' }}>{attPct}</td>
+                         <td style={{ padding: '1rem' }}>{res.marks}</td>
+                       </tr>
+                     );
+                   })}
+                 </tbody>
+               </table>
+             </div>
+             
+             {phaseNotes[phaseData.id] && (
+               <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px', borderLeft: '4px solid var(--color-primary)' }}>
+                 <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Remarks</h4>
+                 <p style={{ margin: 0 }}>{phaseNotes[phaseData.id]}</p>
+               </div>
+             )}
+             
+             <button onClick={() => exportPhasePDF(phaseName, phaseData.results, phaseData.id)} className="btn-small">
+               <Download size={16}/> Download PDF
              </button>
            </Card>
         ))}
