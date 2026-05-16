@@ -9,10 +9,14 @@ import { supabase } from './supabaseClient';
 
 // Layouts with Header
 const AdminLayout = ({ children }) => {
+  const { logout } = useAuth();
+  
   const handleLogout = async () => {
     try { await supabase.auth.signOut(); } catch (e) { console.error(e); }
+    logout();
     localStorage.clear();
-    window.location.href = '/';
+    window.location.hash = '#/';
+    window.location.reload();
   };
 
   return (
@@ -26,10 +30,14 @@ const AdminLayout = ({ children }) => {
 };
 
 const StudentLayout = ({ children }) => {
+  const { logout } = useAuth();
+  
   const handleLogout = async () => {
     try { await supabase.auth.signOut(); } catch (e) { console.error(e); }
+    logout();
     localStorage.clear();
-    window.location.href = '/';
+    window.location.hash = '#/';
+    window.location.reload();
   };
 
   return (

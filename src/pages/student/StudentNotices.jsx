@@ -22,10 +22,11 @@ export default function StudentNotices() {
   };
 
   const parseContent = (rawContent) => {
-    const match = rawContent.match(/\[IMG:(.*?)\]/);
+    if (!rawContent) return { text: '', img: null };
+    const match = String(rawContent).match(/\[IMG:(.*?)\]/);
     if (match) {
       return {
-        text: rawContent.replace(match[0], '').trim(),
+        text: String(rawContent).replace(match[0], '').trim(),
         img: match[1]
       };
     }
