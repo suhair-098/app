@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 
@@ -10,13 +10,13 @@ import { supabase } from './supabaseClient';
 // Layouts with Header
 const AdminLayout = ({ children }) => {
   const { logout } = useAuth();
+  const navigate = useNavigate();
   
   const handleLogout = async () => {
     try { await supabase.auth.signOut(); } catch (e) { console.error(e); }
     logout();
-    localStorage.clear();
-    window.location.hash = '#/';
-    window.location.reload();
+    localStorage.removeItem('asap_mock_session');
+    navigate('/login', { replace: true });
   };
 
   return (
@@ -31,13 +31,13 @@ const AdminLayout = ({ children }) => {
 
 const StudentLayout = ({ children }) => {
   const { logout } = useAuth();
+  const navigate = useNavigate();
   
   const handleLogout = async () => {
     try { await supabase.auth.signOut(); } catch (e) { console.error(e); }
     logout();
-    localStorage.clear();
-    window.location.hash = '#/';
-    window.location.reload();
+    localStorage.removeItem('asap_mock_session');
+    navigate('/login', { replace: true });
   };
 
   return (
