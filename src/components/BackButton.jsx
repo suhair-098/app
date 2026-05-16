@@ -1,13 +1,22 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
-export default function BackButton({ to = "dashboard", label = "Back to Dashboard" }) {
+export default function BackButton({ label = "Back to Dashboard" }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  const handleBack = () => {
+    if (location.pathname.startsWith('/admin')) {
+      navigate('/admin/dashboard');
+    } else {
+      navigate('/student/dashboard');
+    }
+  };
   
   return (
     <button 
-      onClick={() => navigate(to)}
+      onClick={handleBack}
       style={{
         display: 'flex',
         alignItems: 'center',

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../components/Card';
+import BackButton from '../../components/BackButton';
 import { supabase } from '../../supabaseClient';
 import { Layers, Plus, Trash2 } from 'lucide-react';
 import './AdminStyles.css';
@@ -82,6 +83,7 @@ export default function CoursePhaseManager() {
 
   return (
     <div className="animate-fade-in">
+      <BackButton />
       <h1 className="page-title">Manage Courses & Phases</h1>
       
       <div className="admin-grid">

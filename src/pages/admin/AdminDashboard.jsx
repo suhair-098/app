@@ -60,41 +60,8 @@ export default function AdminDashboard() {
     <div className="animate-fade-in">
       <h1 style={{ marginBottom: '2rem', fontSize: '2.5rem', fontWeight: 'bold' }}>Admin Dashboard</h1>
       
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-        <Card title="Global Phase Selection">
-          <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>
-            Select a phase to focus your workspace. All other modules will automatically filter their data based on this selection.
-          </p>
-          <div className="inline-form" style={{ maxWidth: '400px' }}>
-            <div style={{ padding: '0.75rem', background: 'var(--color-primary-transparent)', borderRadius: '12px', color: 'var(--color-primary)', display: 'flex', alignItems: 'center' }}>
-               <Layers size={20} />
-            </div>
-            <select value={selectedPhase} onChange={handlePhaseChange} style={{ flex: 1 }}>
-              <option value="">-- All Phases --</option>
-              {phases.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-        </Card>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-        <Card>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ padding: '1rem', background: 'var(--color-primary-transparent)', borderRadius: '12px', color: 'var(--color-primary)' }}>
-              <BookOpen size={24} />
-            </div>
-            <div>
-              <p style={{ color: 'var(--color-text-secondary)', margin: 0, fontSize: '0.875rem' }}>Active Courses (Selected Phase)</p>
-              <h2 style={{ margin: 0, fontSize: '1.5rem' }}>{coursesCount}</h2>
-            </div>
-          </div>
-        </Card>
-      </div>
-
       <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', color: 'var(--color-text-secondary)' }}>Navigation Menu</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
         {menuItems.map((item, idx) => (
           <div 
             key={idx} 
@@ -130,6 +97,39 @@ export default function AdminDashboard() {
             <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-text-primary)' }}>{item.title}</h3>
           </div>
         ))}
+      </div>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+        <Card title="Global Phase Selection">
+          <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>
+            Select a phase to focus your workspace. All other modules will automatically filter their data based on this selection.
+          </p>
+          <div className="inline-form" style={{ maxWidth: '400px' }}>
+            <div style={{ padding: '0.75rem', background: 'var(--color-primary-transparent)', borderRadius: '12px', color: 'var(--color-primary)', display: 'flex', alignItems: 'center' }}>
+               <Layers size={20} />
+            </div>
+            <select value={selectedPhase} onChange={handlePhaseChange} style={{ flex: 1 }}>
+              <option value="">-- All Phases --</option>
+              {phases.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+        </Card>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+        <Card>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ padding: '1rem', background: 'var(--color-primary-transparent)', borderRadius: '12px', color: 'var(--color-primary)' }}>
+              <BookOpen size={24} />
+            </div>
+            <div>
+              <p style={{ color: 'var(--color-text-secondary)', margin: 0, fontSize: '0.875rem' }}>Active Courses (Selected Phase)</p>
+              <h2 style={{ margin: 0, fontSize: '1.5rem' }}>{coursesCount}</h2>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   );

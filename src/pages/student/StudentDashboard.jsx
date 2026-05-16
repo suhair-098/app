@@ -69,40 +69,8 @@ export default function StudentDashboard() {
     <div className="animate-fade-in">
       <h1 style={{ marginBottom: '2rem', fontSize: '2.5rem', fontWeight: 'bold' }}>Student Dashboard</h1>
       
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-        <Card title="Global Phase Selection">
-          <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>
-            Select a phase to view its specific courses, results, and attendance.
-          </p>
-          <div className="inline-form" style={{ maxWidth: '400px' }}>
-            <div style={{ padding: '0.75rem', background: 'var(--color-primary-transparent)', borderRadius: '12px', color: 'var(--color-primary)', display: 'flex', alignItems: 'center' }}>
-               <Layers size={20} />
-            </div>
-            <select value={selectedPhase} onChange={handlePhaseChange} style={{ flex: 1 }}>
-              <option value="">-- All Phases --</option>
-              {phases.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-        </Card>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
-        <Card title="Attendance" className="attendance-card">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', padding: '1rem 0' }}>
-            <CircularProgress percentage={attendancePercentage} color="var(--color-accent)" />
-            
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{attendedClasses} <span style={{fontSize: '1.25rem', color: 'var(--color-text-muted)'}}>/ {totalClasses}</span></div>
-              <div style={{ color: 'var(--color-text-secondary)' }}>Total Attended</div>
-            </div>
-          </div>
-        </Card>
-      </div>
-
       <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', color: 'var(--color-text-secondary)' }}>Navigation Menu</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
         {menuItems.map((item, idx) => (
           <div 
             key={idx} 
@@ -138,6 +106,38 @@ export default function StudentDashboard() {
             <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-text-primary)' }}>{item.title}</h3>
           </div>
         ))}
+      </div>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+        <Card title="Global Phase Selection">
+          <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>
+            Select a phase to view its specific courses, results, and attendance.
+          </p>
+          <div className="inline-form" style={{ maxWidth: '400px' }}>
+            <div style={{ padding: '0.75rem', background: 'var(--color-primary-transparent)', borderRadius: '12px', color: 'var(--color-primary)', display: 'flex', alignItems: 'center' }}>
+               <Layers size={20} />
+            </div>
+            <select value={selectedPhase} onChange={handlePhaseChange} style={{ flex: 1 }}>
+              <option value="">-- All Phases --</option>
+              {phases.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+        </Card>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
+        <Card title="Attendance" className="attendance-card">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', padding: '1rem 0' }}>
+            <CircularProgress percentage={attendancePercentage} color="var(--color-accent)" />
+            
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{attendedClasses} <span style={{fontSize: '1.25rem', color: 'var(--color-text-muted)'}}>/ {totalClasses}</span></div>
+              <div style={{ color: 'var(--color-text-secondary)' }}>Total Attended</div>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   );

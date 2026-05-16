@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../components/Card';
 import CircularProgress from '../../components/CircularProgress';
+import BackButton from '../../components/BackButton';
 import { supabase } from '../../supabaseClient';
 
 export default function StudentCourses() {
@@ -55,6 +56,7 @@ export default function StudentCourses() {
 
   return (
     <div className="animate-fade-in">
+      <BackButton />
       <h1 className="page-title">My Courses & Syllabus</h1>
       
       <div className="admin-grid">

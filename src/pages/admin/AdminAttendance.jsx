@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../components/Card';
+import BackButton from '../../components/BackButton';
 import { supabase } from '../../supabaseClient';
 import { Plus, Edit2, Trash2, Check, X } from 'lucide-react';
 
@@ -105,6 +106,7 @@ export default function AdminAttendance() {
 
   return (
     <div className="animate-fade-in">
+      <BackButton />
       <h1 className="page-title">Course-Wise Attendance</h1>
       
       {!localStorage.getItem('selectedPhaseId') && (

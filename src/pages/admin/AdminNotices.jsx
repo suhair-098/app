@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../components/Card';
+import BackButton from '../../components/BackButton';
 import { supabase } from '../../supabaseClient';
 import { Plus, Trash2 } from 'lucide-react';
 

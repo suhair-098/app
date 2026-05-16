@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../components/Card';
+import BackButton from '../../components/BackButton';
 import { supabase } from '../../supabaseClient';
 import { Upload, Link as LinkIcon, File } from 'lucide-react';
 
@@ -75,6 +76,7 @@ export default function StudentSubmissions() {
 
   return (
     <div className="animate-fade-in">
+      <BackButton />
       <h1 className="page-title">Submit Your Work</h1>
       
       <Card>

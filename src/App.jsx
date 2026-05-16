@@ -10,8 +10,9 @@ import { supabase } from './supabaseClient';
 // Layouts with Header
 const AdminLayout = ({ children }) => {
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.reload();
+    try { await supabase.auth.signOut(); } catch (e) { console.error(e); }
+    localStorage.clear();
+    window.location.href = '/';
   };
 
   return (
@@ -26,8 +27,9 @@ const AdminLayout = ({ children }) => {
 
 const StudentLayout = ({ children }) => {
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.reload();
+    try { await supabase.auth.signOut(); } catch (e) { console.error(e); }
+    localStorage.clear();
+    window.location.href = '/';
   };
 
   return (
