@@ -10,16 +10,26 @@ export default function StudentCourses() {
 
   useEffect(() => {
     fetchCourses();
+    const handlePhaseChange = () => fetchCourses();
+    window.addEventListener('phaseChanged', handlePhaseChange);
+    return () => window.removeEventListener('phaseChanged', handlePhaseChange);
   }, []);
 
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      // Fetch courses with phase info attached
-      const { data, error } = await supabase
+      const selectedPhase = localStorage.getItem('selectedPhaseId');
+      
+      let query = supabase
         .from('courses')
         .select('*, phases(name)')
         .order('phase_id');
+        
+      if (selectedPhase) {
+        query = query.eq('phase_id', selectedPhase);
+      }
+        
+      const { data, error } = await query;
         
       if (error) {
         console.error("Supabase Error fetchCourses:", error);

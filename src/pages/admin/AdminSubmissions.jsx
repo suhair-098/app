@@ -9,15 +9,26 @@ export default function AdminSubmissions() {
 
   useEffect(() => {
     fetchSubmissions();
+    const handlePhaseChange = () => fetchSubmissions();
+    window.addEventListener('phaseChanged', handlePhaseChange);
+    return () => window.removeEventListener('phaseChanged', handlePhaseChange);
   }, []);
 
   const fetchSubmissions = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const selectedPhase = localStorage.getItem('selectedPhaseId');
+    let query = supabase
       .from('submissions')
-      .select('*, courses(name), users(name)');
+      .select('*, courses(name, phase_id), users(name)');
     
-    if (data) setSubmissions(data);
+    const { data } = await query;
+    if (data) {
+      let finalData = data;
+      if (selectedPhase) {
+        finalData = data.filter(sub => sub.courses?.phase_id == selectedPhase);
+      }
+      setSubmissions(finalData);
+    }
     setLoading(false);
   };
 

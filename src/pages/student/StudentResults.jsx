@@ -2,31 +2,41 @@ import React, { useState, useEffect } from 'react';
 import Card from '../../components/Card';
 import { supabase } from '../../supabaseClient';
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { Download } from 'lucide-react';
 
 export default function StudentResults() {
   const [results, setResults] = useState([]);
   const [attendance, setAttendance] = useState([]);
-  const [notes, setNotes] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchData();
+    const handlePhaseChange = () => fetchData();
+    window.addEventListener('phaseChanged', handlePhaseChange);
+    return () => window.removeEventListener('phaseChanged', handlePhaseChange);
   }, []);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      // Fetch results
-      const { data: resData, error: resError } = await supabase
+      const selectedPhase = localStorage.getItem('selectedPhaseId');
+      
+      let query = supabase
         .from('results')
-        .select('*, courses(name, phases(name))');
+        .select('*, courses(name, phases(name), phase_id)');
+        
+      const { data: resData, error: resError } = await query;
         
       if (resError) {
         console.error("Error fetching results:", resError);
         alert("DB Error in results: " + resError.message);
       } else if (resData) {
-        setResults(resData);
+        let finalRes = resData;
+        if (selectedPhase) {
+           finalRes = resData.filter(r => r.courses?.phase_id == selectedPhase);
+        }
+        setResults(finalRes);
       }
       
       // Fetch attendance
@@ -41,10 +51,6 @@ export default function StudentResults() {
     } finally {
       setLoading(false);
     }
-  };
-  
-  const handleNoteChange = (phaseName, val) => {
-    setNotes(prev => ({...prev, [phaseName]: val}));
   };
 
   const exportPhasePDF = (phaseName, phaseResults) => {
@@ -62,50 +68,49 @@ export default function StudentResults() {
     doc.text(`Phase: ${phaseName}`, 105, 60, { align: "center" });
     doc.text("Results Certificate", 105, 70, { align: "center" });
     
-    // Use jspdf-autotable
-    import('jspdf-autotable').then(() => {
-      const tableData = phaseResults.map(res => {
-        const courseAtts = attendance.filter(a => a.course_id === res.course_id);
-        const ttClasses = courseAtts.reduce((acc, curr) => acc + curr.total_classes, 0);
-        const atClasses = courseAtts.reduce((acc, curr) => acc + curr.attended_classes, 0);
-        const attPct = ttClasses > 0 ? Math.round((atClasses / ttClasses) * 100) + '%' : 'N/A';
-        
-        return [
-          res.courses?.name || 'Unknown Course',
-          String(res.marks || 0),
-          res.grade || 'N/A',
-          attPct
-        ];
-      });
-
-      doc.autoTable({
-        startY: 90,
-        head: [['Course Name', 'Marks', 'Grade', 'Attendance']],
-        body: tableData,
-        theme: 'grid',
-        headStyles: { fillColor: [132, 204, 22] }, // Primary color
-        styles: { fontSize: 11, cellPadding: 4 },
-        margin: { top: 90 }
-      });
-
-      let finalY = doc.lastAutoTable.finalY + 15;
-
-      // Notes block
-      if (notes[phaseName] && notes[phaseName].trim() !== '') {
-        doc.setFontSize(12);
-        doc.text("Notes:", 20, finalY);
-        finalY += 7;
-        doc.setFontSize(10);
-        
-        const splitNotes = doc.splitTextToSize(notes[phaseName], 170);
-        doc.text(splitNotes, 20, finalY);
-      }
+    const tableData = phaseResults.map(res => {
+      const courseAtts = attendance.filter(a => a.course_id === res.course_id);
+      const ttClasses = courseAtts.reduce((acc, curr) => acc + curr.total_classes, 0);
+      const atClasses = courseAtts.reduce((acc, curr) => acc + curr.attended_classes, 0);
+      const attPct = ttClasses > 0 ? Math.round((atClasses / ttClasses) * 100) + '%' : 'N/A';
       
-      doc.setFontSize(10);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 280);
-      
-      doc.save(`ASAP_Results_${phaseName.replace(/\s+/g, '_')}.pdf`);
+      return [
+        res.courses?.name || 'Unknown Course',
+        String(res.marks || 0),
+        res.grade || 'N/A',
+        attPct
+      ];
     });
+
+    autoTable(doc, {
+      startY: 90,
+      head: [['Course Name', 'Marks', 'Grade', 'Attendance']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [139, 92, 246] }, // Primary color
+      styles: { fontSize: 11, cellPadding: 4 },
+      margin: { top: 90 }
+    });
+
+    let finalY = doc.lastAutoTable.finalY + 15;
+
+    // Notes block (check if admin added note to any result in this phase)
+    const adminNotes = phaseResults.map(r => r.admin_note).filter(Boolean);
+    if (adminNotes.length > 0) {
+      doc.setFontSize(12);
+      doc.text("Notes:", 20, finalY);
+      finalY += 7;
+      doc.setFontSize(10);
+      
+      const combinedNotes = adminNotes.join('\n');
+      const splitNotes = doc.splitTextToSize(combinedNotes, 170);
+      doc.text(splitNotes, 20, finalY);
+    }
+    
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 280);
+    
+    doc.save(`ASAP_Results_${phaseName.replace(/\s+/g, '_')}.pdf`);
   };
 
   if (loading) return <div>Loading results...</div>;
@@ -139,17 +144,7 @@ export default function StudentResults() {
                })}
              </ul>
              
-             <div style={{marginTop: '1rem'}}>
-               <textarea 
-                 value={notes[phaseName] || ''}
-                 onChange={(e) => handleNoteChange(phaseName, e.target.value)}
-                 placeholder="Optional: Add a note to be appended to the PDF..."
-                 style={{width: '100%', padding: '0.75rem', borderRadius: '4px', background: 'var(--color-background-dark)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)'}}
-                 rows={3}
-               />
-             </div>
-             
-             <button onClick={() => exportPhasePDF(phaseName, phaseResults)} className="btn-small" style={{marginTop: '1rem'}}>
+             <button onClick={() => exportPhasePDF(phaseName, phaseResults)} className="btn-small" style={{marginTop: '1.5rem'}}>
                <Download size={16}/> Export Phase PDF
              </button>
            </Card>

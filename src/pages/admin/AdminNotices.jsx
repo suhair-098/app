@@ -7,6 +7,7 @@ export default function AdminNotices() {
   const [notices, setNotices] = useState([]);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
 
   useEffect(() => {
     fetchNotices();
@@ -21,11 +22,14 @@ export default function AdminNotices() {
     e.preventDefault();
     if (!title || !content) return;
 
-    const { error } = await supabase.from('notices').insert([{ title, content }]);
+    const { error } = await supabase.from('notices').insert([{ title, content, image_url: imageUrl }]);
     if (!error) {
       setTitle('');
       setContent('');
+      setImageUrl('');
       fetchNotices();
+    } else {
+      alert("Error posting notice: Ensure 'image_url' column exists in 'notices' table. " + error.message);
     }
   };
 
@@ -48,6 +52,9 @@ export default function AdminNotices() {
               <label>Content</label>
               <textarea value={content} onChange={e => setContent(e.target.value)} rows="4" required />
               
+              <label>Image URL (Optional)</label>
+              <input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://example.com/image.jpg" />
+              
               <button type="submit" className="btn-small"><Plus size={16}/> Post Notice</button>
             </form>
           </Card>
@@ -57,10 +64,15 @@ export default function AdminNotices() {
           <Card title="Recent Notices">
             <ul className="item-list">
               {notices.map(notice => (
-                <li key={notice.id} className="list-item complex" style={{alignItems: 'center'}}>
+                <li key={notice.id} className="list-item complex" style={{alignItems: 'flex-start'}}>
                   <div style={{flex: 1}}>
                     <strong>{notice.title}</strong>
                     <p className="desc">{notice.content}</p>
+                    {notice.image_url && (
+                      <div style={{marginTop: '0.5rem'}}>
+                        <img src={notice.image_url} alt="Notice attachment" style={{maxWidth: '100%', borderRadius: '8px', maxHeight: '150px', objectFit: 'cover'}} />
+                      </div>
+                    )}
                     <small style={{color: 'var(--color-primary-light)', fontSize: '0.75rem', marginTop: '0.5rem', display: 'block'}}>
                        {new Date(notice.created_at).toLocaleString()}
                     </small>

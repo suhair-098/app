@@ -4,9 +4,9 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 
 import { Home, BookOpen, FileText, UploadCloud, Users, Layers, LayoutDashboard } from 'lucide-react';
-import Sidebar from './components/Sidebar';
+import Navbar from './components/Navbar';
 
-// Layouts with Sidebar
+// Layouts with Navbar
 const AdminLayout = ({ children }) => {
   const links = [
     { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -18,9 +18,9 @@ const AdminLayout = ({ children }) => {
   ];
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw' }}>
-      <Sidebar links={links} title="ASAP Admin" />
-      <main style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw' }}>
+      <Navbar links={links} title="ASAP Admin" />
+      <main style={{ flex: 1, padding: '2rem', overflowY: 'auto', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
         {children}
       </main>
     </div>
@@ -33,12 +33,13 @@ const StudentLayout = ({ children }) => {
     { to: "/student/courses", label: "My Courses", icon: BookOpen },
     { to: "/student/submissions", label: "Submissions", icon: UploadCloud },
     { to: "/student/results", label: "Results", icon: FileText },
+    { to: "/student/notices", label: "Notices", icon: BookOpen },
   ];
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw' }}>
-      <Sidebar links={links} title="ASAP Student" />
-      <main style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw' }}>
+      <Navbar links={links} title="ASAP Student" />
+      <main style={{ flex: 1, padding: '2rem', overflowY: 'auto', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
         {children}
       </main>
     </div>
@@ -76,6 +77,7 @@ import StudentDashboard from './pages/student/StudentDashboard';
 import StudentCourses from './pages/student/StudentCourses';
 import StudentSubmissions from './pages/student/StudentSubmissions';
 import StudentResults from './pages/student/StudentResults';
+import StudentNotices from './pages/student/StudentNotices';
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -110,6 +112,7 @@ function AppRoutes() {
               <Route path="courses" element={<StudentCourses />} />
               <Route path="submissions" element={<StudentSubmissions />} />
               <Route path="results" element={<StudentResults />} />
+              <Route path="notices" element={<StudentNotices />} />
             </Routes>
           </StudentLayout>
         </ProtectedRoute>

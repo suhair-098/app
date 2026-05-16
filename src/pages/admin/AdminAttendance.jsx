@@ -17,13 +17,26 @@ export default function AdminAttendance() {
   const [editAttendedClasses, setEditAttendedClasses] = useState('');
 
   useEffect(() => {
-    supabase.from('courses').select('id, name').then(({data}) => { if(data) setCourses(data); });
+    supabase.from('courses').select('id, name, phase_id').then(({data}) => { if(data) setCourses(data); });
     fetchRecords();
+    
+    const handlePhaseChange = () => fetchRecords();
+    window.addEventListener('phaseChanged', handlePhaseChange);
+    return () => window.removeEventListener('phaseChanged', handlePhaseChange);
   }, []);
 
   const fetchRecords = async () => {
-    const { data, error } = await supabase.from('attendance').select('*, courses(name)');
-    if (data) setRecords(data);
+    const selectedPhase = localStorage.getItem('selectedPhaseId');
+    let query = supabase.from('attendance').select('*, courses(name, phase_id)');
+    
+    const { data, error } = await query;
+    if (data) {
+      let finalData = data;
+      if (selectedPhase) {
+        finalData = data.filter(r => r.courses?.phase_id == selectedPhase);
+      }
+      setRecords(finalData);
+    }
   };
 
   const handleLogAttendance = async (e) => {
@@ -94,13 +107,25 @@ export default function AdminAttendance() {
     <div className="animate-fade-in">
       <h1 className="page-title">Course-Wise Attendance</h1>
       
+      {!localStorage.getItem('selectedPhaseId') && (
+        <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(234, 179, 8, 0.1)', color: 'var(--color-warning)', border: '1px solid rgba(234, 179, 8, 0.2)', borderRadius: '8px' }}>
+          Select a Phase in the Dashboard to filter the courses list and attendance records.
+        </div>
+      )}
+
       <div className="admin-grid">
         <Card title="Upload Attendance Segment">
           <form onSubmit={handleLogAttendance} className="stacked-form">
             <label>Select Course</label>
             <select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)} required>
                <option value="">-- Choose Course --</option>
-               {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+               {courses
+                 .filter(c => {
+                   const sp = localStorage.getItem('selectedPhaseId');
+                   return sp ? c.phase_id == sp : true;
+                 })
+                 .map(c => <option key={c.id} value={c.id}>{c.name}</option>)
+               }
             </select>
             
             <label>Total Classes Conducted</label>

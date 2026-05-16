@@ -13,19 +13,35 @@ export default function StudentSubmissions() {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    supabase.from('courses').select('id, name')
+    fetchCourses();
+    const handlePhaseChange = () => fetchCourses();
+    window.addEventListener('phaseChanged', handlePhaseChange);
+    return () => window.removeEventListener('phaseChanged', handlePhaseChange);
+  }, []);
+
+  const fetchCourses = () => {
+    const selectedPhase = localStorage.getItem('selectedPhaseId');
+    let query = supabase.from('courses').select('id, name, phase_id');
+    
+    query
       .then(({data, error}) => {
          if (error) {
            console.error("Error loading courses:", error);
            alert("DB Error: " + error.message);
          }
-         if (data) setCourses(data);
+         if (data) {
+           if (selectedPhase) {
+             setCourses(data.filter(c => c.phase_id == selectedPhase));
+           } else {
+             setCourses(data);
+           }
+         }
       })
       .catch(err => {
          console.error("Crash loading courses:", err);
          alert("Crash: " + err.message);
       });
-  }, []);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
