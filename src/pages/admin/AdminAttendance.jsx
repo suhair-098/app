@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../components/Card';
 import { supabase } from '../../supabaseClient';
-import { Plus } from 'lucide-react';
+import { Plus, Edit2, Trash2, Check, X } from 'lucide-react';
 
 export default function AdminAttendance() {
   const [courses, setCourses] = useState([]);
@@ -11,15 +11,18 @@ export default function AdminAttendance() {
   const [totalClasses, setTotalClasses] = useState('');
   const [attendedClasses, setAttendedClasses] = useState('');
 
+  // Edit state
+  const [editingId, setEditingId] = useState(null);
+  const [editTotalClasses, setEditTotalClasses] = useState('');
+  const [editAttendedClasses, setEditAttendedClasses] = useState('');
+
   useEffect(() => {
     supabase.from('courses').select('id, name').then(({data}) => { if(data) setCourses(data); });
     fetchRecords();
   }, []);
 
   const fetchRecords = async () => {
-    // Wait until schema allows course_id
     const { data, error } = await supabase.from('attendance').select('*, courses(name)');
-    // Graceful fail if column doesnt exist yet before user runs SQL
     if (data) setRecords(data);
   };
 
@@ -30,7 +33,6 @@ export default function AdminAttendance() {
        return;
     }
 
-    // Single student architecture: Attempt to find student ID
     let studentId = null;
     const { data: userData } = await supabase.from('users').select('id').eq('role', 'student').limit(1);
     if (userData && userData.length > 0) {
@@ -49,7 +51,42 @@ export default function AdminAttendance() {
        setAttendedClasses('');
        fetchRecords();
     } else {
-       alert(`Error: ${error.message} (Did you run the ALTER TABLE SQL command?)`);
+       alert(`Error: ${error.message}`);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this attendance record?")) {
+      const { error } = await supabase.from('attendance').delete().eq('id', id);
+      if (!error) {
+        fetchRecords();
+      } else {
+        alert("Error deleting record: " + error.message);
+      }
+    }
+  };
+
+  const handleEditClick = (rec) => {
+    setEditingId(rec.id);
+    setEditTotalClasses(rec.total_classes);
+    setEditAttendedClasses(rec.attended_classes);
+  };
+
+  const handleSaveEdit = async (id) => {
+    if (parseInt(editAttendedClasses) > parseInt(editTotalClasses)) {
+      alert("Attended classes cannot exceed total classes!");
+      return;
+    }
+    const { error } = await supabase.from('attendance').update({
+      total_classes: parseInt(editTotalClasses),
+      attended_classes: parseInt(editAttendedClasses)
+    }).eq('id', id);
+
+    if (!error) {
+      setEditingId(null);
+      fetchRecords();
+    } else {
+      alert("Error updating record: " + error.message);
     }
   };
 
@@ -80,12 +117,53 @@ export default function AdminAttendance() {
           <ul className="item-list">
              {records.map(rec => (
                <li key={rec.id} className="list-item complex">
-                 <div>
+                 <div style={{ flex: 1 }}>
                    <strong>{rec.courses?.name || 'Unknown Course'}</strong>
                    <span className="badge">
                       {Math.round((rec.attended_classes / rec.total_classes) * 100)}%
                    </span>
-                   <p className="desc">{rec.attended_classes} / {rec.total_classes} classes</p>
+                   {editingId === rec.id ? (
+                     <div className="inline-form" style={{ marginTop: '0.5rem' }}>
+                       <input 
+                         type="number" 
+                         value={editAttendedClasses} 
+                         onChange={e => setEditAttendedClasses(e.target.value)} 
+                         min="0"
+                         style={{ width: '80px', padding: '0.25rem' }} 
+                       />
+                       <span style={{ padding: '0.25rem' }}>/</span>
+                       <input 
+                         type="number" 
+                         value={editTotalClasses} 
+                         onChange={e => setEditTotalClasses(e.target.value)} 
+                         min="1"
+                         style={{ width: '80px', padding: '0.25rem' }} 
+                       />
+                     </div>
+                   ) : (
+                     <p className="desc">{rec.attended_classes} / {rec.total_classes} classes</p>
+                   )}
+                 </div>
+                 <div style={{ display: 'flex', gap: '0.5rem' }}>
+                   {editingId === rec.id ? (
+                     <>
+                       <button onClick={() => handleSaveEdit(rec.id)} className="btn-icon" style={{ color: 'var(--color-success)' }} title="Save">
+                         <Check size={18} />
+                       </button>
+                       <button onClick={() => setEditingId(null)} className="btn-icon" style={{ color: 'var(--color-error)' }} title="Cancel">
+                         <X size={18} />
+                       </button>
+                     </>
+                   ) : (
+                     <>
+                       <button onClick={() => handleEditClick(rec)} className="btn-icon" title="Edit">
+                         <Edit2 size={18} />
+                       </button>
+                       <button onClick={() => handleDelete(rec.id)} className="btn-icon danger" title="Delete">
+                         <Trash2 size={18} />
+                       </button>
+                     </>
+                   )}
                  </div>
                </li>
              ))}

@@ -62,45 +62,50 @@ export default function StudentResults() {
     doc.text(`Phase: ${phaseName}`, 105, 60, { align: "center" });
     doc.text("Results Certificate", 105, 70, { align: "center" });
     
-    // Table Header
-    doc.setFontSize(12);
-    doc.text("Course Name", 20, 100);
-    doc.text("Marks", 110, 100);
-    doc.text("Grade", 140, 100);
-    doc.text("Attendance", 170, 100);
-    doc.line(20, 104, 190, 104);
-    
-    let y = 115;
-    phaseResults.forEach((res) => {
-      // Find matching attendance
-      const courseAtts = attendance.filter(a => a.course_id === res.course_id);
-      const ttClasses = courseAtts.reduce((acc, curr) => acc + curr.total_classes, 0);
-      const atClasses = courseAtts.reduce((acc, curr) => acc + curr.attended_classes, 0);
-      const attPct = ttClasses > 0 ? Math.round((atClasses / ttClasses) * 100) + '%' : 'N/A';
+    // Use jspdf-autotable
+    import('jspdf-autotable').then(() => {
+      const tableData = phaseResults.map(res => {
+        const courseAtts = attendance.filter(a => a.course_id === res.course_id);
+        const ttClasses = courseAtts.reduce((acc, curr) => acc + curr.total_classes, 0);
+        const atClasses = courseAtts.reduce((acc, curr) => acc + curr.attended_classes, 0);
+        const attPct = ttClasses > 0 ? Math.round((atClasses / ttClasses) * 100) + '%' : 'N/A';
+        
+        return [
+          res.courses?.name || 'Unknown Course',
+          String(res.marks || 0),
+          res.grade || 'N/A',
+          attPct
+        ];
+      });
 
-      doc.text(res.courses?.name || 'Unknown Course', 20, y);
-      doc.text(String(res.marks || 0), 110, y);
-      doc.text(res.grade || 'N/A', 140, y);
-      doc.text(attPct, 170, y);
-      y += 12;
-    });
-    
-    // Notes block
-    if (notes[phaseName] && notes[phaseName].trim() !== '') {
-      y += 15;
-      doc.setFontSize(12);
-      doc.text("Notes:", 20, y);
-      y += 7;
-      doc.setFontSize(10);
+      doc.autoTable({
+        startY: 90,
+        head: [['Course Name', 'Marks', 'Grade', 'Attendance']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: { fillColor: [132, 204, 22] }, // Primary color
+        styles: { fontSize: 11, cellPadding: 4 },
+        margin: { top: 90 }
+      });
+
+      let finalY = doc.lastAutoTable.finalY + 15;
+
+      // Notes block
+      if (notes[phaseName] && notes[phaseName].trim() !== '') {
+        doc.setFontSize(12);
+        doc.text("Notes:", 20, finalY);
+        finalY += 7;
+        doc.setFontSize(10);
+        
+        const splitNotes = doc.splitTextToSize(notes[phaseName], 170);
+        doc.text(splitNotes, 20, finalY);
+      }
       
-      const splitNotes = doc.splitTextToSize(notes[phaseName], 170);
-      doc.text(splitNotes, 20, y);
-    }
-    
-    doc.setFontSize(10);
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 280);
-    
-    doc.save(`ASAP_Results_${phaseName.replace(/\s+/g, '_')}.pdf`);
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 280);
+      
+      doc.save(`ASAP_Results_${phaseName.replace(/\s+/g, '_')}.pdf`);
+    });
   };
 
   if (loading) return <div>Loading results...</div>;
